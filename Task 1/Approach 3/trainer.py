@@ -20,5 +20,5 @@ class Trainer:
                 loss = self.criterion(outputs, targets)
                 loss.backward()
                 self.optimizer.step()
-                print(f"Batch Loss : {loss}")
+                # print(f"Batch Loss : {loss}")
             print(f'Epoch {epoch + 1}/{num_epochs}, Loss: {loss.item():.4f}')

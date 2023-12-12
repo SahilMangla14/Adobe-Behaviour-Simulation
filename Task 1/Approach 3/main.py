@@ -38,6 +38,8 @@ def main():
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+    print("Device ", device)
+    
     # Instantiate the model
     model = NeuralNetwork(input_size=X_train.shape[1])
     model = model.to(device)
@@ -48,6 +50,8 @@ def main():
     num_epochs = 50
     trainer.train(num_epochs)
 
+    torch.save(model,'./regression_model.pth')
+    
     comparison_df = evaluate_model(model, criterion, X_test_tensor, y_test_tensor, data_preprocessor.scaler_likes, device)
 
     # Example: Plot scatter

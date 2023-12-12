@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 
-
 class NeuralNetwork(nn.Module):
     def __init__(self, input_size):
         super(NeuralNetwork, self).__init__()

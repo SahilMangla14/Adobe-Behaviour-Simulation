@@ -15,9 +15,15 @@ def evaluate_model(model, criterion, X_test_tensor, y_test_tensor, scaler_likes,
         print(f'Mean Squared Error on Test Set: {test_loss.item():.4f}')
 
     # Convert tensors to NumPy arrays
-    y_test_np = y_test_tensor.cpu().numpy()
-    y_pred_np = y_pred.cpu().numpy()
-
+    y_test_np = []
+    y_pred_np = []
+    if(device != "cpu"):
+        y_test_np = y_test_tensor.cpu().numpy()
+        y_pred_np = y_pred.cpu().numpy()
+    else:
+        y_test_np = y_test_tensor.numpy()
+        y_pred_np = y_pred.numpy()
+        
     # Inverse transform using the scaler
     y_test_inv = scaler_likes.inverse_transform(y_test_np)
     y_pred_inv = scaler_likes.inverse_transform(y_pred_np)
@@ -39,7 +45,8 @@ def plot_scatter(y_test_np, y_pred_np):
     plt.title('Actual vs Predicted Values')
     plt.xlabel('Actual Values')
     plt.ylabel('Predicted Values')
-    plt.show()
+    plt.save('./scatter_plot.png')
+    # plt.show()
 
 
 def plot_residuals(df, actual_col, predicted_col, levels=None):
@@ -59,7 +66,8 @@ def plot_residuals(df, actual_col, predicted_col, levels=None):
 
     plt.legend()
     plt.grid(True)
-    plt.show()
+    plt.save('./residual_plot.png')
+    # plt.show()
 
 
 def analyze_residuals_levels(df, actual_col, predicted_col, levels=None):
