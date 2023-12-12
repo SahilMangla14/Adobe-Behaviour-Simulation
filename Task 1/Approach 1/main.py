@@ -49,6 +49,8 @@ def main():
     num_epochs = 30
     train_model(model, train_dataloader, criterion, optimizer, num_epochs, device)
 
+    torch.save(model,'./regression_model.pth')
+    
     # Evaluate the model
     evaluate_model(model, test_dataloader, criterion, device)
 
