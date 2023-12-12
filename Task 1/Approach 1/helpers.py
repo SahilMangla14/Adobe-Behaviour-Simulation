@@ -59,8 +59,10 @@ def evaluate_model(model, test_dataloader, criterion, device):
             all_labels.extend(labels.cpu().numpy())
 
     mse = mean_squared_error(all_labels, all_predictions)
+    rmse = mean_squared_error(all_labels, all_predictions, squared = False)
     print(f'Mean Squared Error on Test Set: {mse:.4f}')
-    return mse
+    print(f'Root Mean Squared Error on Test Set: {rmse:.4f}')
+    return mse, rmse
 
 
 def predict_model(model, test_dataloader, scaler_likes, device):
