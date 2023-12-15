@@ -44,6 +44,40 @@ def calculate_company_weighted_rank(df):
     return sorted_company_likes
 
 
+def calculate_username_weighted_rank(df):
+    # Group by 'company' and sum the 'likes'
+    username_likes = df.groupby('username')['likes'].sum().reset_index()
+    sorted_username_likes = username_likes.sort_values(by='likes', ascending=False)
+    
+    # Assign ranks to companies based on likes
+    sorted_username_likes['rank'] = sorted_username_likes['likes'].rank(ascending=True, method='min')
+
+    # # Define multiple thresholds and corresponding factors
+    thresholds_factors = [
+        (20000000, 6),
+        (10000000, 5.5),
+        (5000000, 5),
+        (2000000, 4.5),
+        (1000000, 4),
+        (500000, 3.5),
+        (100000, 3.0),
+        (50000, 2.5),
+        (10000, 2),
+        (5000, 1.5)
+    ]
+
+    # Define a function to apply the appropriate factor based on likes
+    def apply_factor(row):
+        for threshold, factor in thresholds_factors:
+            if row['likes'] > threshold:
+                return row['rank'] * factor
+        return row['rank']
+
+    # Apply the function to create the 'weighted_rank' column
+    sorted_username_likes['weighted_rank'] = sorted_username_likes.apply(apply_factor, axis=1)
+    
+    return sorted_username_likes
+
 
 def analyze_ner_entities(df):
     # Explode the 'ner_entities' list into separate rows
@@ -188,9 +222,9 @@ if __name__ == "__main__":
     # Filter out warnings
     warnings.filterwarnings("ignore")
     
-    df = pd.read_csv('./ner_entity_300k.csv')
-    df = df.head(5)
-    df['likes'] = df['likes'].apply(lambda x: ast.literal_eval(x) if pd.notna(x) else 0)
+    df = pd.read_csv('./ner_entity_300k_updated.csv')
+    if(isinstance(df['likes'].iloc[0], str) == True):
+        df['likes'] = df['likes'].apply(lambda x: ast.literal_eval(x) if pd.notna(x) else 0)
     
     # Get the current working directory
     current_directory = os.getcwd()
@@ -200,55 +234,77 @@ if __name__ == "__main__":
     company_analysis = calculate_company_weighted_rank(df)
     df['company_rank'] = df['inferred company'].map(company_analysis.set_index('inferred company')['weighted_rank'])
     
-    df_cr_path = os.path.join(current_directory, 'df_company_rank.csv')
-    df.to_csv(df_cr_path, index = False)
+    
+    print("USERNAME RANK...")
+    username_analysis = calculate_username_weighted_rank(df)
+    df['username_rank'] = df['username'].map(username_analysis.set_index('username')['weighted_rank'])
+    
+    
+    # df_cr_path = os.path.join(current_directory, 'df_company_rank.csv')
+    # df.to_csv(df_cr_path, index = False)
     
     # Find ner entities and then assign total rank entity
     # ner = spacy.load("en_core_web_sm")
     # df['ner_entities'] = df['content'].apply(lambda text: [ent.text for ent in ner(text).ents])
-    print("ENTITY RANK...")
-    entity_analysis = analyze_ner_entities(df)
-    entity_rank_map = dict(zip(entity_analysis['ner_entity'], entity_analysis['weighted_rank']))
-    df['total_rank_entity'] = df.apply(calculate_total_rank, entity_rank_map=entity_rank_map, axis=1)
+    # print("ENTITY RANK...")
+    # entity_analysis = analyze_ner_entities(df)
+    # entity_rank_map = dict(zip(entity_analysis['ner_entity'], entity_analysis['weighted_rank']))
+    # df['total_rank_entity'] = df.apply(calculate_total_rank, entity_rank_map=entity_rank_map, axis=1)
     
     
-    df_ter_path = os.path.join(current_directory, 'df_entity_rank.csv')
-    df.to_csv(df_ter_path, index = False)
+    # df_ter_path = os.path.join(current_directory, 'df_entity_rank.csv')
+    # df.to_csv(df_ter_path, index = False)
     
     # EPOCH TIME AND USERNAME ONE HOT ENCODING
+    # df = pd.read_csv('./df_entity_rank.csv')
     print("TIME...")
     df['epoch_time'] = df['date'].apply(lambda x: convert_to_epoch(x))
-    print("ONE HOT ENCODING...")
-    OneHotEncoding_username(df)
+    
+    # print("ONE HOT ENCODING...")
+    # OneHotEncoding_username(df)
     
     # PCA components content bert embeddings
     print("PCA...")
-    PCA_reduced_embeddings_content =  bert_embeddings_apply_pca(df,'content','.')
+    # PCA_reduced_embeddings_content =  bert_embeddings_apply_pca(df,'content','.')
     
-    pca_path = os.path.join(current_directory, 'pca.csv')
-    PCA_reduced_embeddings_content.to_csv(pca_path, index = False)
+    # pca_path = os.path.join(current_directory, 'pca.csv')
+    # PCA_reduced_embeddings_content.to_csv(pca_path, index = False)
     
+    PCA_reduced_embeddings_content = pd.read_csv('./pca.csv')
     PCA_reduced_embeddings_content = PCA_reduced_embeddings_content.drop(columns = ['id','content'])
 
+    
+    # print("CONCATENATION...")
+    # df_likes = df['likes']
+    # df_company_rank = df['company_rank']
+    # df_total_entity_rank = df['total_rank_entity']
+    # df_epoch_time = df['epoch_time']
+    # df_username_onehot = df.drop(columns=['id','date','likes','content','username','media','inferred company','company_rank','ner_entities','total_rank_entity','epoch_time'])
+    
+    # df_train = pd.concat([PCA_reduced_embeddings_content,df_username_onehot,df_epoch_time,df_total_entity_rank,df_company_rank,df_likes], axis = 1)
+    # df_all = pd.concat([df,PCA_reduced_embeddings_content], axis = 1)
+    
+    
+    # # Specify the CSV file path
+    # df_train_path = os.path.join(current_directory, 'df_train2.csv')
+    # df_train.to_csv(df_train_path, index = False)
+    
+    # df_all_path = os.path.join(current_directory, 'df_all.csv')
+    # df_all.to_csv(df_all_path, index = False)
+    # print("DONE. HURRAY")
+    
     
     print("CONCATENATION...")
     df_likes = df['likes']
     df_company_rank = df['company_rank']
-    df_total_entity_rank = df['total_rank_entity']
     df_epoch_time = df['epoch_time']
-    df_username_onehot = df.drop(columns=['id','date','likes','content','username','media','inferred company','company_rank','ner_entities','total_rank_entity','epoch_time','bert_embeddings'])
+    df_username_rank = df['username_rank']
     
-    df_train = pd.concat([PCA_reduced_embeddings_content,df_username_onehot,df_epoch_time,df_total_entity_rank,df_company_rank,df_likes], axis = 1)
-    df_all = pd.concat([df,PCA_reduced_embeddings_content], axis = 1)
+    df_train = pd.concat([PCA_reduced_embeddings_content,df_username_rank,df_epoch_time,df_company_rank, df_likes], axis = 1)
     
-    
-    # Specify the CSV file path
-    df_train_path = os.path.join(current_directory, 'df_train.csv')
-    df_train.to_csv(df_train_path, index = False)
-    
-    df_all_path = os.path.join(current_directory, 'df_all.csv')
-    df_all.to_csv(df_all_path, index = False)
-    print("DONE. HURRAY")
+    path = os.path.join(current_directory,'data_train' ,'df_train.csv')
+    df_train.to_csv(path,index = False)
+    print("DONE HURRAY!")
     
     
     

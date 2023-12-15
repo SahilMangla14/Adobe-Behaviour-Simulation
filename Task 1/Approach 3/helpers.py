@@ -35,7 +35,7 @@ def evaluate_model(model, criterion, X_test_tensor, y_test_tensor, scaler_likes,
     comparison_df = pd.DataFrame(comparison_result, columns=['y_test', 'y_pred'])
 
     # Display the DataFrame
-    comparison_df.to_csv('./ann_results.csv', index=False)
+    comparison_df.to_csv('./Results2/ann_results.csv', index=False)
 
     return comparison_df
 
@@ -45,7 +45,7 @@ def plot_scatter(y_test_np, y_pred_np):
     plt.title('Actual vs Predicted Values')
     plt.xlabel('Actual Values')
     plt.ylabel('Predicted Values')
-    plt.save('./scatter_plot.png')
+    plt.save('./Results/scatter_plot.png')
     # plt.show()
 
 
@@ -66,7 +66,7 @@ def plot_residuals(df, actual_col, predicted_col, levels=None):
 
     plt.legend()
     plt.grid(True)
-    plt.save('./residual_plot.png')
+    plt.save('./Results/residual_plot.png')
     # plt.show()
 
 

@@ -13,12 +13,18 @@ from data_preprocessing import DataPreprocessor
 from ann import NeuralNetwork
 from trainer import Trainer
 from helpers import evaluate_model, plot_scatter, plot_residuals, analyze_residuals_levels
+import joblib
 
 def main():
-    data_preprocessor = DataPreprocessor('./df_final.csv')
+    data_preprocessor = DataPreprocessor('./data_train/df_train.csv')
+    # data_preprocessor.map_to_one()
     data_preprocessor.scale_target_variable()
     data_preprocessor.scale_features()
+    # data_preprocessor.remove_outliers()
     data_preprocessor.drop_na_rows()
+    data_preprocessor.save_scalers('./Results2/scaler_likes.joblib', './Results2/scaler_epoch_time.joblib', './Results2/scaler_username_rank.joblib', './Results2/scaler_company_rank.joblib')
+
+    print(len(data_preprocessor.df))
 
     X_train, X_test, y_train, y_test = data_preprocessor.split_data()
 
@@ -50,23 +56,23 @@ def main():
     num_epochs = 50
     trainer.train(num_epochs)
 
-    torch.save(model,'./regression_model.pth')
+    torch.save(model.state_dict(),'./Results2/regression_model.pth')
     
     comparison_df = evaluate_model(model, criterion, X_test_tensor, y_test_tensor, data_preprocessor.scaler_likes, device)
 
-    # Example: Plot scatter
-    plot_scatter(comparison_df['y_test'].values, comparison_df['y_pred'].values)
+    # # Example: Plot scatter
+    # plot_scatter(comparison_df['y_test'].values, comparison_df['y_pred'].values)
 
-    # Example: Plot residuals
-    plot_residuals(comparison_df, 'y_test', 'y_pred', levels=[1, 2])
+    # # Example: Plot residuals
+    # plot_residuals(comparison_df, 'y_test', 'y_pred', levels=[1, 2])
 
-    # Example: Analyze residuals levels
-    levels_to_analyze = [0.1, 0.2, 0.3, 0.4, 0.5, 1, 2, 3, 4, 5]
-    counts = analyze_residuals_levels(comparison_df, 'y_test', 'y_pred', levels=levels_to_analyze)
+    # # Example: Analyze residuals levels
+    # levels_to_analyze = [0.1, 0.2, 0.3, 0.4, 0.5, 1, 2, 3, 4, 5]
+    # counts = analyze_residuals_levels(comparison_df, 'y_test', 'y_pred', levels=levels_to_analyze)
 
-    print("Results falling within specified levels of variation:")
-    for level, count in counts.items():
-        print(f"{count} results within {level} of variation.")
+    # print("Results falling within specified levels of variation:")
+    # for level, count in counts.items():
+    #     print(f"{count} results within {level} of variation.")
 
 
 if __name__ == "__main__":
